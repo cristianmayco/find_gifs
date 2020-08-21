@@ -4,6 +4,7 @@ import 'package:findgifs/ui/gif_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:share/share.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -17,7 +18,7 @@ class _HomePageState extends State<HomePage> {
   Future<Map> _getGifs() async {
     http.Response response;
 
-    if (_search == null) {
+    if (_search == null || _search.isEmpty) {
       response = await http.get(
           "https://api.giphy.com/v1/gifs/trending?api_key=zPfJHNJ2bGCpUJr7jyvcW0RcctC2QOUN&limit=10&rating=g");
     } else {
@@ -29,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   int _getCount(List data) {
-    if (_search == null) {
+    if (_search == null || _search.isEmpty) {
       return data.length;
     } else {
       return data.length + 1;
@@ -101,12 +102,14 @@ class _HomePageState extends State<HomePage> {
             crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10),
         itemCount: _getCount(snapshot.data["data"]),
         itemBuilder: (context, index) {
-          if (_search == null || index < snapshot.data["data"].length) {
+          if (_search == null || _search.isEmpty || index < snapshot.data["data"].length) {
             return GestureDetector(
-              child: Image.network(
-                snapshot.data["data"][index]["images"]["fixed_height"]["url"],
-                height: 300,
+              child: FadeInImage.memoryNetwork(
+                placeholder: kTransparentImage,
+                height: 300.0,
                 fit: BoxFit.cover,
+                image: snapshot.data["data"][index]["images"]["fixed_height"]
+                    ["url"],
               ),
               onTap: () {
                 Navigator.push(
@@ -115,8 +118,9 @@ class _HomePageState extends State<HomePage> {
                         builder: (context) =>
                             GifPage(snapshot.data["data"][index])));
               },
-              onLongPress: (){
-                Share.share(snapshot.data["data"][index]["images"]["fixed_height"]["url"]);
+              onLongPress: () {
+                Share.share(snapshot.data["data"][index]["images"]
+                    ["fixed_height"]["url"]);
               },
             );
           } else {
